@@ -28,7 +28,7 @@ class MessagesController < ApplicationController
     # @message = Message.new(message_params)
     @message = current_user.messages.create(message_params)
     if @message.save
-      render json: @message, status: :created #, location: @message
+      render json: @message.transform_message, status: :created #, location: @message
     else
       render json: @message.errors, status: :unprocessable_entity
     end
@@ -37,7 +37,7 @@ class MessagesController < ApplicationController
   # PATCH/PUT /messages/1
   def update
     if @message.update(message_params)
-      render json: @message
+      render json: @message.transform_message
     else
       render json: @message.errors, status: :unprocessable_entity
     end
