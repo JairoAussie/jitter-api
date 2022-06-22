@@ -7,6 +7,7 @@ class MessagesController < ApplicationController
   def index
     # @messages = Message.order("updated_at DESC")
     @messages = []
+    
     Message.order("updated_at DESC").each do |message|
       @messages << message.transform_message
     end
