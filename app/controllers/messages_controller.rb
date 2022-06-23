@@ -1,5 +1,5 @@
 class MessagesController < ApplicationController
-  before_action :authenticate_user, except: [:index, :show] 
+  before_action :authenticate_user, except: [:index, :show, :user_messages] 
   before_action :set_message, only: [:show, :update, :destroy]
   before_action :check_ownership, only: [:update, :destroy]
 
@@ -7,13 +7,35 @@ class MessagesController < ApplicationController
   def index
     # @messages = Message.order("updated_at DESC")
     @messages = []
+
+    if (params[:username])
+      Message.find_by_user(params[:username]).order("updated_at DESC").each do |message|
+        @messages << message.transform_message
+      end
+    else
+      Message.order("updated_at DESC").each do |message|
+        @messages << message.transform_message
+      end
+    end
+
     
-    Message.order("updated_at DESC").each do |message|
+   if @messages.count == 0
+    render json: {error: "Messages not found"}
+   else
+    render json: @messages
+   end
+  end
+
+  def user_messages
+
+    @messages = []
+    Message.find_by_user(params[:username]).order("updated_at DESC").each do |message|
       @messages << message.transform_message
     end
 
     render json: @messages
-  end
+
+  end 
 
   # GET /messages/1
   def show
@@ -24,6 +46,17 @@ class MessagesController < ApplicationController
     end
   end
 
+  def my_messages 
+      # @messages = Message.order("updated_at DESC")
+      @messages = []
+      
+      current_user.messages.order("updated_at DESC").each do |message|
+      @messages << message.transform_message
+    end
+
+    render json: @messages
+
+  end
   # POST /messages
   def create
     # @message = Message.new(message_params)
@@ -52,8 +85,12 @@ class MessagesController < ApplicationController
   private
 
     def check_ownership
-      if current_user.id != @message.user.id
-        render json: {error: "Unauthorised to do this action"}
+      #if the user is an admin will skip the ownership if
+      if !(current_user.is_admin || current_user.id == @message.user.id)
+      # if !current_user.is_admin
+      #   if current_user.id != @message.user.id
+          render json: {error: "Unauthorised to do this action"}
+        # end
       end
     end
 
